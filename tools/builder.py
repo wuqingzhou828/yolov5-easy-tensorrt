@@ -1,11 +1,19 @@
-import torch
-import tensorrt as trt
+from collections import OrderedDict, namedtuple
+
 import numpy as np
-from collections import OrderedDict,namedtuple
+import tensorrt as trt
+import torch
+
 from tools import clip_coords
 
 
-def buildEngine(onnxsave,enginesave,workspace=8,verbose=False,fp16=False,dynamic=False,noTF32=False):
+def buildEngine(onnxsave,
+                enginesave,
+                workspace=8,
+                verbose=False,
+                fp16=False,
+                dynamic=False,
+                noTF32=False):
     logger = trt.Logger(trt.Logger.INFO)
     if verbose:
         logger.min_severity = trt.Logger.Severity.VERBOSE
@@ -23,11 +31,13 @@ def buildEngine(onnxsave,enginesave,workspace=8,verbose=False,fp16=False,dynamic
     if noTF32:
         config.clear_flag(trt.BuilderFlag.TF32)
     config.set_flag(trt.BuilderFlag.STRICT_TYPES)
-    with builder.build_serialized_network(network, config) as engine, open(str(enginesave), 'wb') as t:
+    with builder.build_serialized_network(network, config) as engine, open(
+            str(enginesave), 'wb') as t:
         t.write(engine)
     return enginesave.stat().st_size >= 1024
 
-def loadEngine(engine,device=torch.device("cuda")):
+
+def loadEngine(engine, device=torch.device("cuda")):
     Binding = namedtuple('Binding', ('name', 'dtype', 'shape', 'data', 'ptr'))
     logger = trt.Logger(trt.Logger.INFO)
     trt.init_libnvinfer_plugins(logger, namespace="")
@@ -38,20 +48,24 @@ def loadEngine(engine,device=torch.device("cuda")):
         name = model.get_binding_name(index)
         dtype = trt.nptype(model.get_binding_dtype(index))
         shape = tuple(model.get_binding_shape(index))
-        data = torch.from_numpy(np.empty(shape, dtype=np.dtype(dtype))).to(device)
-        bindings[name] = Binding(name, dtype, shape, data, int(data.data_ptr()))
+        data = torch.from_numpy(np.empty(shape,
+                                         dtype=np.dtype(dtype))).to(device)
+        bindings[name] = Binding(name, dtype, shape, data,
+                                 int(data.data_ptr()))
     binding_addrs = OrderedDict((n, d.ptr) for n, d in bindings.items())
     context = model.create_execution_context()
-    return bindings,binding_addrs,context
+    return bindings, binding_addrs, context
 
-def warm(imsz,binding_addrs,context,device=torch.device("cuda"),times=10):
+
+def warm(imsz, binding_addrs, context, device=torch.device("cuda"), times=10):
     for i in range(times):
         tmp = torch.randn(imsz).to(device)
         binding_addrs['images'] = int(tmp.data_ptr())
         context.execute_v2(list(binding_addrs.values()))
     return True
 
-def inferImg(im,bindings,binding_addrs,context):
+
+def inferImg(im, bindings, binding_addrs, context):
     result = []
     binding_addrs['images'] = int(im.data_ptr())
     context.execute_v2(list(binding_addrs.values()))
@@ -60,9 +74,8 @@ def inferImg(im,bindings,binding_addrs,context):
     detection_scores = bindings['detection_scores'].data
     detection_classes = bindings['detection_classes'].data
     for i in range(num_detections[0][0]):
-        box = clip_coords(detection_boxes[0][i],im.shape[:2])
+        box = clip_coords(detection_boxes[0][i], im.shape[:2])
         score = detection_scores[0][i]
         cls = detection_classes[0][i]
-        result.append((box,score,cls))
+        result.append((box, score, cls))
     return result
-
