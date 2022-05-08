@@ -104,7 +104,7 @@ def parse_opt():
                         help='min score for nms attrs')
     parser.add_argument('--nms_score',
                         type=float,
-                        default=0.25,
+                        default=0.45,
                         help='min mns_score for nms attrs')
 
     parser.add_argument('--verbose',
