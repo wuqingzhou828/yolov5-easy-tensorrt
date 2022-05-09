@@ -1,9 +1,8 @@
 import numpy as np
+import onnx
 import onnx_graphsurgeon as gs
 import torch
 import torch.nn as nn
-
-import onnx
 from onnx import shape_inference
 
 
@@ -23,6 +22,7 @@ def findNode(gs_graph, name):
 
 
 class AdditionNet(nn.Module):
+
     def __init__(self):
         super().__init__()
         self.convert_matrix = torch.tensor(

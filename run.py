@@ -2,10 +2,10 @@ import argparse
 import tempfile
 from pathlib import Path
 
+import onnx
 import onnx_graphsurgeon as gs
 import torch
 
-import onnx
 from tools import AdditionNet, buildEngine, check_gs, registerNMS
 
 
