@@ -4,7 +4,7 @@ import numpy as np
 import tensorrt as trt
 import torch
 
-from tools import clip_coords
+from .transform import clip_coords
 
 
 def buildEngine(onnxsave,
