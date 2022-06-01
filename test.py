@@ -40,11 +40,11 @@ def main(opt):
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image',
+    parser.add_argument('--engine',
                         type=str,
                         default="engine/yolov5s.engine",
                         help='save engine path')
-    parser.add_argument('--engine',
+    parser.add_argument('--image',
                         type=str,
                         default="images/bus.jpg",
                         help='test image path')
